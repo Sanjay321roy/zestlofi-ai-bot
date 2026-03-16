@@ -6,15 +6,16 @@ import urllib.parse
 
 st.set_page_config(page_title="Zestlofi AI Master", page_icon="👹")
 
-# Gemini Setup
+# Gemini Setup - Sabse Safe Tareeka
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+    # 404 se bachne ke liye direct stable name use kar rahe hain
     try:
         model = genai.GenerativeModel('gemini-1.5-flash')
     except:
         model = genai.GenerativeModel('gemini-pro')
 
-# Sidebar Status
+# Sidebar
 st.sidebar.title("🤖 Master Control")
 if os.path.exists("token.json"):
     st.sidebar.success("✅ YouTube Connected")
@@ -31,36 +32,39 @@ if password == "zest123":
 
     # MISSION 1: SCRIPT
     if st.button("✍️ 1. Generate AI Script"):
-        # Gemini jaisa loading niche dikhega
-        with st.status("Gemini is writing your story...", expanded=False) as status:
+        with st.status("Gemini is thinking...", expanded=False) as status:
             try:
                 prompt = f"Write a 4-line emotional Hindi story about {topic}. Dark lofi style."
                 response = model.generate_content(prompt)
                 st.session_state.script = response.text
                 status.update(label="✅ Script Ready!", state="complete")
-                st.balloons()
             except Exception as e:
-                st.error(f"Error: {e}")
+                # Agar 404 aaye toh hum models/ prefix ke saath try karenge backup mein
+                try:
+                    model_backup = genai.GenerativeModel('models/gemini-pro')
+                    response = model_backup.generate_content(prompt)
+                    st.session_state.script = response.text
+                    status.update(label="✅ Script Ready (Backup)!", state="complete")
+                except:
+                    st.error(f"Error: {e}")
 
     if st.session_state.script:
-        st.subheader("📝 Script Content:")
         st.info(st.session_state.script)
         
         # MISSION 2: VOICE
         if st.button("🎙️ 2. Convert to Voice"):
-            with st.spinner("Creating AI Voiceover..."):
+            with st.spinner("AI Awaaz ban rahi hai..."):
                 tts = gTTS(text=st.session_state.script, lang='hi')
                 tts.save("voice.mp3")
                 st.audio("voice.mp3")
         
-        # MISSION 3: IMAGES (Fixing Visibility)
+        # MISSION 3: IMAGES
         if st.button("🖼️ 3. Generate AI Images"):
-            # Niche loading dikhayega
-            with st.status("Designing your Visuals...", expanded=True) as status:
+            with st.status("Visuals loading...", expanded=True) as status:
                 query = urllib.parse.quote(f"{topic} dark lofi anime aesthetic 4k")
-                img_url = f"https://image.pollinations.ai/prompt/{query}?width=1080&height=1920&nologo=true"
-                # Seed use kar rahe taaki image force load ho
-                st.image(img_url, caption="Shorts Visual", use_container_width=True)
-                status.update(label="🎨 Image Generated Successfully!", state="complete")
+                # Image ko seedha direct URL se display kar rahe bina kisi display logic ke
+                img_tag = f"https://image.pollinations.ai/prompt/{query}?width=1080&height=1920&nologo=true"
+                st.image(img_tag)
+                status.update(label="🎨 Visuals Ready!", state="complete")
 else:
-    st.info("Sidebar mein password 'zest123' dalo.")
+    st.info("Sidebar mein password dalo.")
