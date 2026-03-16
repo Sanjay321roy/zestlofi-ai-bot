@@ -1,44 +1,57 @@
 import streamlit as st
 import os
 import google.generativeai as genai
+from gtts import gTTS
+import base64
 
-st.set_page_config(page_title="Zestlofi AI Master", page_icon="👹", layout="wide")
+st.set_page_config(page_title="Zestlofi AI Master", page_icon="👹")
 
-# Sidebar Status
-st.sidebar.title("🤖 System Status")
-if os.path.exists("token.json") and os.path.exists("client_secret.json"):
-    st.sidebar.success("✅ YouTube Connected")
-
-# Setup Gemini with Auto-Model Selection
+# Gemini Setup
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    
-    # Check available models automatically
-    try:
-        available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        # Pehla working model utha lo
-        model_name = available_models[0] if available_models else "models/gemini-pro"
-        model = genai.GenerativeModel(model_name)
-    except:
-        model = genai.GenerativeModel('gemini-pro')
+    model = genai.GenerativeModel('gemini-1.5-flash')
 
-password = st.sidebar.text_input("Enter Password", type="password")
+# Sidebar
+st.sidebar.title("🤖 Status")
+if os.path.exists("token.json"):
+    st.sidebar.success("✅ YouTube Connected")
+
+password = st.sidebar.text_input("Password", type="password")
 
 if password == "zest123":
-    st.title("👹 Zestlofi AI - Master Control")
+    st.title("👹 Zestlofi AI - Voice Lab")
     topic = st.text_input("Video Topic", "Pure Heart Devil Story")
     
-    if st.button("🚀 GENERATE SCRIPT"):
-        with st.status("Searching for active AI model...", expanded=True) as status:
+    if 'script' not in st.session_state:
+        st.session_state.script = ""
+
+    # 1. Generate Script
+    if st.button("✍️ 1. Generate Script"):
+        with st.spinner("Gemini is writing..."):
             try:
-                prompt = f"Write a short, powerful YouTube Shorts script about {topic} in Hindi."
+                prompt = f"Write a very short 30-40 second YouTube Shorts script about {topic} in Hindi. Emotional and dark lofi style."
                 response = model.generate_content(prompt)
-                st.subheader("📝 Your Script:")
-                st.write(response.text)
-                status.update(label="✅ Success!", state="complete")
-                st.balloons()
+                st.session_state.script = response.text
+                st.success("Script Taiyar!")
             except Exception as e:
-                st.error(f"Last try failed: {e}")
-                st.info("Bhai, ek baar API key check karo ya thoda wait karo, Google API kabhi kabhi time leti hai.")
+                st.error(f"Error: {e}")
+
+    if st.session_state.script:
+        st.text_area("Script Content", st.session_state.script, height=150)
+        
+        # 2. Generate Voice
+        if st.button("🎙️ 2. Convert to Voice"):
+            with st.spinner("Converting to Hindi Voice..."):
+                try:
+                    tts = gTTS(text=st.session_state.script, lang='hi')
+                    tts.save("voice.mp3")
+                    
+                    # Audio Player
+                    audio_file = open("voice.mp3", "rb")
+                    audio_bytes = audio_file.read()
+                    st.audio(audio_bytes, format='audio/mp3')
+                    st.success("Bhai, awaaz suno! Mast hai?")
+                except Exception as e:
+                    st.error(f"Voice Error: {e}")
 else:
-    st.info("Sidebar mein password 'zest123' dalo.")
+    st.info("Sidebar mein password dalo.")
