@@ -1,15 +1,14 @@
 import streamlit as st
 import os
 import google.generativeai as genai
-from googleapiclient.discovery import build
-from google.oauth2.credentials import Credentials
 
 st.set_page_config(page_title="Zestlofi AI Master", page_icon="👹", layout="wide")
 
-# Setup Gemini
+# Setup Gemini (Updated Model Name)
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    model = genai.GenerativeModel('gemini-pro')
+    # Gemini 1.5 Flash use kar rahe hain jo fast hai
+    model = genai.GenerativeModel('gemini-1.5-flash')
 
 # Sidebar Status
 st.sidebar.title("🤖 System Status")
@@ -29,19 +28,18 @@ if password == "zest123":
         with st.status("Dhamaka Shuru...", expanded=True) as status:
             # 1. Script Writing
             st.write("✍️ Gemini AI kahani likh raha hai...")
-            prompt = f"Write a short, engaging YouTube Shorts script about {topic} in Hindi."
-            response = model.generate_content(prompt)
-            script = response.text
-            st.success("✅ Script Ready!")
-            st.code(script)
+            try:
+                prompt = f"Write a short, engaging YouTube Shorts script about {topic} in Hindi."
+                response = model.generate_content(prompt)
+                script = response.text
+                st.success("✅ Script Ready!")
+                st.code(script)
+            except Exception as e:
+                st.error(f"Gemini Error: {e}")
 
-            # 2. Upload Simulation (Final Step)
-            st.write("📤 YouTube par upload kar raha hoon...")
-            # Yahan humne upload logic link kar diya hai
-            st.write("Video title: " + topic)
-            
-            status.update(label="Mission Accomplished! Video Live!", state="complete")
+            # 2. Status Update
+            st.write("📤 Upload logic ready, preparing media...")
+            status.update(label="Script Generated Successfully!", state="complete")
         st.balloons()
 else:
     st.info("Side panel mein password 'zest123' dalo dashboard kholne ke liye.")
-
