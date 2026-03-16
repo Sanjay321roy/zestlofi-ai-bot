@@ -8,18 +8,19 @@ st.set_page_config(page_title="Zestlofi AI Master", page_icon="👹")
 # Gemini Auto-Selection Logic
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    
-    # Ye block khud dhoondhega kaunsa model chal raha hai
     try:
         models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        # Pehla working model uthayega (usually gemini-pro)
-        selected_model = models[0] if models else "gemini-pro"
-        model = genai.GenerativeModel(selected_model)
+        model = genai.GenerativeModel(models[0] if models else "gemini-pro")
     except:
         model = genai.GenerativeModel('gemini-pro')
 
-# Sidebar Status
+# Sidebar Status (YouTube Connection Check)
 st.sidebar.title("🤖 Status")
+if os.path.exists("token.json"):
+    st.sidebar.success("✅ YouTube Connected")
+else:
+    st.sidebar.error("❌ YouTube Disconnected")
+
 password = st.sidebar.text_input("Enter Password", type="password")
 
 if password == "zest123":
@@ -30,15 +31,14 @@ if password == "zest123":
         st.session_state.script = ""
 
     if st.button("✍️ 1. Generate AI Script"):
-        with st.status("Dhoondh raha hoon working AI model...", expanded=True) as status:
+        with st.spinner("Gemini is thinking..."):
             try:
                 prompt = f"Write a 4-line emotional Hindi story about {topic} for YouTube Shorts."
                 response = model.generate_content(prompt)
                 st.session_state.script = response.text
-                status.update(label="✅ Script Ready!", state="complete")
                 st.balloons()
             except Exception as e:
-                st.error(f"Abhi bhi error hai: {e}. Bhai, ek baar Google AI Studio mein ja kar naya API key bana kar 'Secrets' mein update kar.")
+                st.error(f"Error: {e}")
 
     if st.session_state.script:
         st.subheader("📝 Script Content:")
